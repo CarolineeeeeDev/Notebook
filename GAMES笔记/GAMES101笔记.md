@@ -713,7 +713,200 @@ downsampling
 
 按照二次误差度量**由小到大**做贪缩：优先队列/堆
 
-
-
 #### 网格正规化
 
+### 阴影图 Shadow Mapping
+
+只能做硬阴影，会产生走样现象
+
+核心思想：如果点不在阴影里=可以从摄像机看到这个点，且光源也能看到这个点
+
+第一步操作：从光源看向场景，做一遍光栅化
+
+![image-20240601204659060](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601204659060.png)
+
+第二步操作：从眼睛出发再次看向场景，并投影回光源，判断实际到光源的距离是否与之前记录的深度一致
+
+![image-20240601204642940](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601204642940.png)
+
+![image-20240601204720748](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601204720748.png)
+
+点光源是不会产生软阴影的，软阴影的产生一定是因为光源有一定的大小
+
+![image-20240601211347179](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601211347179.png)
+
+## 六、光线追踪
+
+光栅化不能很好地表示全局效果：
+
+![image-20240601212441310](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601212441310.png)
+
+光线追踪很准确，但是非常慢
+
+光栅化：实时；光线追踪：离线
+
+### 最基础的光线追踪算法
+
+![image-20240601213606713](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601213606713.png)
+
+算某个点的着色
+
+只弹射一次：
+
+![image-20240601220504854](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601220504854.png)
+
+多次弹射（Whitted Ray Tracing）：
+
+![image-20240601221438178](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601221438178.png)
+
+### 求光线和物体表面的交点
+
+光线上任意一个点的定义r(t)
+
+求光线和球的交点：
+
+![image-20240601222916228](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601222916228.png)
+
+![image-20240601223012201](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601223012201.png)
+
+让光线到多边形内的一点和多边形交点一定是奇数，光线到多边形外的一点和多边形交点一定是偶数；
+
+推广到3D也是可行的
+
+![image-20240601225509095](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240601225509095.png)
+
+如何求光线和三角形的交点：
+
+ 分解为：光线和平面求交点+判断交点在不在三角形内这两个步骤
+
+平面可以定义为： 一个（法线）方向和一个平面上的点
+
+![image-20240602134517446](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602134517446.png)
+
+求交点：
+
+![image-20240602134541270](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602134541270.png)
+
+MT算法：一次解出光线与平面的交点在不在三角形内--用重心坐标表示三角形内的点
+
+用克拉默法则求解
+
+![image-20240602135142315](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602135142315.png)
+
+如何让光线和三角形面求交点**加速**：
+
+包围盒/包围体积：常用AABB包围盒
+
+![image-20240602140255479](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602140255479.png)
+
+对于2D情况（3D情况也一样）：最后结果是求**交集**
+
+![image-20240602142359137](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602142359137.png)
+
+对于3D情况：只有当进入所有pair时候才算进入，只要退出了其中一个pair就算退出
+
+![image-20240602142750847](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602142750847.png)
+
+如果离开盒子的时间小于0：盒子在光线背后，不可能有交点
+
+如果离开的时间大于0而进入的时间时间小于0：光线的起点在盒子里
+
+总结：当且仅当**进入时间小于离开时间**且**离开时间非负**的情况下，光线与包围盒有交点
+
+#### 格子解法
+
+光线和盒子求交点会快一些（直线的光栅化）
+
+![image-20240602150031226](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602150031226.png)
+
+#### 空间划分
+
+八叉树、KD树、BSP树
+
+![image-20240602152540854](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602152540854.png)
+
+#####  KD树
+
+只需要在叶子节点存储要处理的 形状
+
+![image-20240602154329837](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602154329837.png)
+
+![image-20240602155114124](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602155114124.png)
+
+#### ==物体划分--BVH树==
+
+ 一个物体只可能出现在一个格子里
+
+![image-20240602155535987](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602155535987.png)
+
+ 划分的方法：沿着最长轴划分/找中间的（第n/2个）物体划分--快速选择算法O(n)时间复杂度
+
+BVH也是叶子节点存实际的物体
+
+算法伪代码：
+
+![image-20240602160433830](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602160433830.png)
+
+### 辐射度量学
+
+ 辐射度量学定义了精准物理量--比whitted风格更高级
+
+光的空间属性：辐射通量Radiant flux、辐射强度Intensity、辐射照度Irradiance、辐射亮度Radiance
+
+Flux的定义：
+
+![image-20240602162715399](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602162715399.png)
+
+![image-20240602162732014](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602162732014.png)
+
+Intensity、Irradiance、Radiance的定义：
+
+![image-20240602162913131](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602162913131.png)
+
+==Intensity：单位立体角上的辐射通量==
+
+![image-20240602163743226](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602163743226.png)
+
+立体角：球面对应的面积除以半径的平方
+
+![image-20240602164144167](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602164144167.png)
+
+![image-20240602163950816](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602163950816.png)
+
+对于各向同性（均匀分布）点光源：立体角为4Π
+
+![image-20240602164736765](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602164736765.png)
+
+ 
+
+==Irradiance：单位面积上的辐射通量==
+
+![image-20240602170152451](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602170152451.png)
+
+Intensity其实没有变，Irradiance在衰减
+
+![image-20240602170530739](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602170530739.png)
+
+==Radiance：在单位面积且单位立体角的辐射通量==
+
+![image-20240602170847791](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602170847791.png)
+
+
+
+![image-20240602171033313](D:\Dev\Github\Notebook\刷题\剑指offer\image-20240602171033313.png)
+
+BRDF：双向反射分布函数
+
+从一个方向进来打到某物体后往不同方向上反射的能量分布
+
+定义：任何一个出射方向上radiance的微分除以一个入射点上irradiance的微分
+
+![image-20240602191816951](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602191816951.png)
+
+用一个方程描述所有的光线传播：
+
+![image-20240602193823796](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602193823796.png)
+
+![image-20240602194330810](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602194330810.png)
+
+![image-20240602194356942](C:\Users\LilSc\AppData\Roaming\Typora\typora-user-images\image-20240602194356942.png)
