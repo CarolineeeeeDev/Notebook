@@ -40,7 +40,7 @@ SEditableText、SLeafWidget、SMultiLineEditableText、SRichTextBlock不包含Ch
 
 SPanel可以包含多个ChildWidget， SPanel本身没有Slot结构，继承它的子类自己添加Slot结构，并且实现不同的结构方式，例如SWidgetSwitcher。
 
-![image-20240623121608457](images\1.png)
+![1](images\1.png)
 
 ### Slate属性方法
 
@@ -240,6 +240,77 @@ void AMyHUD::ShowMySlate()
 ```
 
 ### Slate自定义参数和代理绑定
+
+在button上绑定点击事件
+
+```c++
+SNew(SButton)
+.OnClicked(this, &SMyCompoundWidget::OnPlayClick)
+
+SNew(SButton)
+.OnClicked(this, &SMyCompoundWidget::OnQuitClick)
+    
+FReply SMyCompoundWidget::OnPlayClick() const
+{
+	if (MyOwnerHUD.IsValid())
+	{
+		MyOwnerHUD->RemoveMySlate();
+	}
+	return FReply::Handled();
+}
+
+FReply SMyCompoundWidget::OnQuitClick() const
+{
+	if (MyOwnerHUD.IsValid())
+	{
+		MyOwnerHUD->PlayerOwner->ConsoleCommand("quit");
+	}
+	return FReply::Handled();
+}
+```
+
+HUD传参：
+
+```c++
+#pragma once
+
+#include "CoreMinimal.h"
+#include "MyHUD.h"
+#include "Widgets/SCompoundWidget.h"
+
+class AMyHUD;
+
+class CAROLINE_SLATEPROJ_API SMyCompoundWidget : public SCompoundWidget
+{
+public:
+	SLATE_BEGIN_ARGS(SMyCompoundWidget)
+	{}
+	SLATE_ARGUMENT(TWeakObjectPtr<AMyHUD>, OwnerHUDArg)
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs);
+
+	FReply OnPlayClick() const;
+	FReply OnQuitClick() const;
+
+private:
+	TWeakObjectPtr<AMyHUD> MyOwnerHUD;
+};
+```
+
+```c++
+void AMyHUD::ShowMySlate()
+{
+	if (GEngine && GEngine->GameViewport)
+	{
+		MyCompoundWidget = SNew(SMyCompoundWidget).OwnerHUDArg(this);//new的时候把HUD传进去
+		//第一种添加Slate到视口
+		GEngine->GameViewport->AddViewportWidgetContent(MyCompoundWidget.ToSharedRef());//智能指针转化为智能引用
+		//第二种添加Slate到视口
+		//GEngine->GameViewport->AddViewportWidgetContent(SAssignNew(WidgetContainer, SWeakWidget).PossiblyNullContent(MyCompoundWidget.ToSharedRef()));//智能指针转化为智能引用
+	}
+}
+```
 
 
 
