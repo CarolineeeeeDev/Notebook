@@ -312,7 +312,38 @@ void AMyHUD::ShowMySlate()
 }
 ```
 
+### 创建EditorStandAloneWindows插件
 
+![2](images\2.png)
 
+效果：
 
+![3](images\3.png)
+
+### 扩展编辑器工具栏
+
+```c++
+void FMyCustomWindowModule::StartupModule()
+{
+    //...Other Functions
+	//工具栏扩展按钮
+	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+	TSharedPtr<FExtender> ToolBarExtender = MakeShareable(new FExtender);
+	ToolBarExtender->AddToolBarExtension(
+		"Play",
+		EExtensionHook::After,
+		PluginCommands,
+		FToolBarExtensionDelegate::CreateRaw(this, &FMyCustomWindowModule::AddToolBarExtension)
+	);
+	LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolBarExtender);
+}
+```
+
+```c++
+void FMyCustomWindowModule::AddToolBarExtension(FToolBarBuilder& builder)
+{
+	builder.AddToolBarButton(FMyCustomWindowCommands::Get().OpenPluginWindow);
+}
+
+```
 
