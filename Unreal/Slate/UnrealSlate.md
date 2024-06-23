@@ -314,11 +314,11 @@ void AMyHUD::ShowMySlate()
 
 ### 创建EditorStandAloneWindows插件
 
-![2](images\2.png)
+![2](images/2.png)
 
 效果：
 
-![3](images\3.png)
+![3](images/3.png)
 
 ### 扩展编辑器工具栏
 
