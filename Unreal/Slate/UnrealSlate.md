@@ -40,8 +40,6 @@ SEditableText、SLeafWidget、SMultiLineEditableText、SRichTextBlock不包含Ch
 
 SPanel可以包含多个ChildWidget， SPanel本身没有Slot结构，继承它的子类自己添加Slot结构，并且实现不同的结构方式，例如SWidgetSwitcher。
 
-![1](images\1.png)
-![1](images\1.png)
 ### Slate属性方法
 
 Slate提供了一系列宏来初始化控件。
