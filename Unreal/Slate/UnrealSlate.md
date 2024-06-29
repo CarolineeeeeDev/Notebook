@@ -403,7 +403,7 @@ void FMyCustomWindowModule::StartupModule()
 
 在Resource中文件夹中添加自定义图标按钮
 
-![4](images\4.png)
+![4](images/4.png)
 
 MyCustomWindowStyle.cpp
 
@@ -426,7 +426,7 @@ TSharedRef< FSlateStyleSet > FMyCustomWindowStyle::Create()
 
 效果：
 
-![5](images\5.png)
+![5](images/5.png)
 
 MyCustomWindow.h
 
