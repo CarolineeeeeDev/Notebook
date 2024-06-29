@@ -502,3 +502,27 @@ TSharedRef<SDockTab> FMyCustomWindowModule::OnSpawnCustomWindow2(const FSpawnTab
 }
 ```
 
+### FSlateApplication自定义窗口
+
+效果：
+
+![6](images/6.png)
+
+MyCustomWindow.cpp
+
+```c++
+#include "Framework/Application/SlateApplication.h"
+
+void FMyCustomWindowModule::PluginButtonClicked()
+{
+	//FGlobalTabmanager::Get()->TryInvokeTab(MyCustomWindowTabName);
+	auto Window = SNew(SWindow)
+		.Title(FText::FromString("MyCustomWindow"))
+		.ClientSize(FVector2D(600, 600))
+		[
+			SNew(SSpacer)
+		];
+	FSlateApplication::Get().AddWindow(Window);
+}
+```
+
