@@ -804,3 +804,112 @@ AddSlot()
 	];
 ```
 
+### FSlateWidgetStyle自定义图片文本声音颜色样式
+
+效果：
+
+![10](images/10.png)
+
+数据配置：
+
+![11](images/11.png)
+
+MySlateWidgetMainStyle.h
+
+```c++
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Styling/SlateWidgetStyleContainerBase.h"
+#include "Styling/SlateWidgetStyle.h"
+#include "Styling/SlateBrush.h"
+#include "Fonts/SlateFontInfo.h"
+#include "Sound/SlateSound.h"
+#include "Math/Color.h"
+#include "MySlateWidgetMainStyle.generated.h"
+
+USTRUCT()
+struct FMainWidgetStyle :public FSlateWidgetStyle
+{
+	GENERATED_BODY()
+public:
+	virtual void GetResource(TArray<const FSlateBrush*>& OutBrushes) const {};
+	virtual const FName GetTypeName() const;
+	static const FMainWidgetStyle& GetDefault();
+	static const FName TypeName;
+
+	UPROPERTY(EditAnywhere, Category = "MySlate")
+	FSlateBrush MyBrush;
+	UPROPERTY(EditAnywhere, Category = "MySlate")
+	FSlateFontInfo MyFont;
+	UPROPERTY(EditAnywhere, Category = "MySlate")
+	FSlateSound MySound;
+	UPROPERTY(EditAnywhere, Category = "MySlate")
+	FLinearColor MyColor;
+};
+
+UCLASS()
+class MYCUSTOMWINDOW_API UMySlateWidgetMainStyle : public USlateWidgetStyleContainerBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "MyWidgetStyle", meta = (ShowOnlyInnerProperties))
+	FMainWidgetStyle MyWidgetStyle;
+
+	virtual const struct FSlateWidgetStyle* const GetStyle() const override;
+	
+};
+```
+
+MySlateWidgetMainStyle.cpp
+
+```c++
+#include "Slate/MySlateWidgetMainStyle.h"
+
+const FName FMainWidgetStyle::TypeName(TEXT("MainWidgetStyle"));
+
+const FName FMainWidgetStyle::GetTypeName() const
+{
+	return TypeName;
+}
+
+const FMainWidgetStyle& FMainWidgetStyle::GetDefault()
+{
+	static FMainWidgetStyle MyWidgetStyle;
+	return MyWidgetStyle;
+}
+
+const FSlateWidgetStyle* const UMySlateWidgetMainStyle::GetStyle() const
+{
+	return static_cast<const struct FSlateWidgetStyle*>(&MyWidgetStyle);
+}
+```
+
+SMyCanvas.cpp
+
+```c++
+#include "Slate/MySlateWidgetMainStyle.h"
+#include "MyCustomWindowStyle.h"
+//Construct函数中
+//StyleImage
+const struct FMainWidgetStyle* MyCustomWidgetStyle = &FMyCustomWindowStyle::Get().GetWidgetStyle<FMainWidgetStyle>(TEXT("MyWidgetStyle"));
+AddSlot()
+	.Position(FVector2D(200, 400))
+	.Size(FVector2D(100, 100))
+	[
+		SNew(SImage)
+			.Image(&MyCustomWidgetStyle->MyBrush)
+	];
+```
+
+SMyCustomWindowStyle.cpp
+
+```c++
+//Create函数中
+TSharedRef< FSlateStyleSet > Style = FSlateGameResources::New(FMyCustomWindowStyle::GetStyleSetName(), "/Game/Slate/MySlateWidgetStyle", "/Game/Slate/MySlateWidgetStyle");
+	FString IconString = IPluginManager::Get().FindPlugin("MyCustomWindow")->GetBaseDir() / TEXT("Resources/MyCustomButtonIcon.png");
+	Style->Set("MyCustomWindow.OpenPluginWindow", new FSlateImageBrush(IconString, Icon32x32));
+	return Style;
+```
+
