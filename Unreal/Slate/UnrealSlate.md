@@ -526,3 +526,88 @@ void FMyCustomWindowModule::PluginButtonClicked()
 }
 ```
 
+### SCanvas
+
+SMyCanvas.h
+
+```c++
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Widgets/SCanvas.h"
+
+class MYCUSTOMWINDOW_API SMyCanvas : public SCanvas
+{
+public:
+	SLATE_BEGIN_ARGS(SMyCanvas)
+	{}
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs);
+
+	FReply OnClickButton();
+};
+```
+
+SMyCanvas.cpp
+
+```c++
+#include "Slate/SMyCanvas.h"
+#include "SlateOptMacros.h"
+
+BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
+void SMyCanvas::Construct(const FArguments& InArgs)
+{
+	AddSlot()
+		.Position(FVector2D(100, 100))
+		.Size(FVector2D(100, 40))
+		[
+			SNew(SButton)
+				.OnClicked(this, &SMyCanvas::OnClickButton)
+		];
+	AddSlot()
+		.Position(FVector2D(300, 100))
+		.Size(FVector2D(100, 40))
+		[
+			SNew(SButton)
+				.OnClicked(this, &SMyCanvas::OnClickButton)
+		];
+}
+FReply SMyCanvas::OnClickButton()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Red, TEXT("Button Clicked"));
+	return FReply::Handled();
+}
+END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+```
+
+SMyCustomWindow.h
+
+```c++
+TSharedPtr<SDockTab>  MainCanvasTab;
+bool OnCanCloseTab();
+```
+
+SMyCustomWindow.cpp
+
+```c++
+#include "Slate/SMyCanvas.h"
+
+bool FMyCustomWindowModule::OnCanCloseTab()
+{
+	return true;
+}
+
+TSharedRef<SDockTab> FMyCustomWindowModule::OnSpawnCustomWindow1(const FSpawnTabArgs& SpawnTabArgs)
+{
+	SAssignNew(MainCanvasTab, SDockTab)
+		.OnCanCloseTab(SDockTab::FCanCloseTab::CreateRaw(this, &FMyCustomWindowModule::OnCanCloseTab))
+		.TabRole(ETabRole::MajorTab)
+		.ContentPadding(FMargin(0));
+
+	MainCanvasTab->SetContent(SNew(SMyCanvas));
+	return MainCanvasTab.ToSharedRef();
+}
+
+```
+
