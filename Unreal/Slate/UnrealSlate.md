@@ -526,6 +526,8 @@ void FMyCustomWindowModule::PluginButtonClicked()
 }
 ```
 
+## 组件
+
 ### SCanvas
 
 SMyCanvas.h
@@ -608,6 +610,70 @@ TSharedRef<SDockTab> FMyCustomWindowModule::OnSpawnCustomWindow1(const FSpawnTab
 	MainCanvasTab->SetContent(SNew(SMyCanvas));
 	return MainCanvasTab.ToSharedRef();
 }
+```
 
+### SComboBox
+
+效果：
+
+![ComboBox](images/ComboBox.gif)
+
+SMyCanvas.h
+
+```c++
+//ComboBox
+TSharedPtr<SComboBox<TSharedPtr<FString>>> MyComboBox;
+TSharedPtr<FString> CurrentItem = 0;
+TArray<TSharedPtr<FString>> Options;
+TSharedRef<SWidget> MakeWidgetForOption(TSharedPtr<FString> InOption);
+void OnSelectionChanged(TSharedPtr<FString> NewValue, ESelectInfo::Type);
+FText GetCurrentItemLabel() const;
+```
+
+SMyCanvas.cpp
+
+```c++
+void SMyCanvas::Construct(const FArguments& InArgs)
+{
+	//...OtherFunctions
+	//ComboBox
+	Options.Add(MakeShareable(new FString("One")));
+	Options.Add(MakeShareable(new FString("Two")));
+	Options.Add(MakeShareable(new FString("Three")));
+	AddSlot()
+		.Position(FVector2D(500, 100))
+		.Size(FVector2D(100, 40))
+		[
+			SAssignNew(MyComboBox, SComboBox<TSharedPtr<FString>>)
+				.OptionsSource(&Options)
+				.OnGenerateWidget(this,&SMyCanvas::MakeWidgetForOption)
+				.OnSelectionChanged(this,&SMyCanvas::OnSelectionChanged)
+				.InitiallySelectedItem(CurrentItem)
+				[
+					SNew(STextBlock)
+						.Text(this,&SMyCanvas::GetCurrentItemLabel)
+				]
+		];
+}
+
+TSharedRef<SWidget> SMyCanvas::MakeWidgetForOption(TSharedPtr<FString> InOption)
+{
+
+	return SNew(STextBlock).Text(FText::FromString(*InOption));
+}
+
+void SMyCanvas::OnSelectionChanged(TSharedPtr<FString> NewValue, ESelectInfo::Type)
+{
+	CurrentItem = NewValue;
+}
+
+FText SMyCanvas::GetCurrentItemLabel() const
+{
+	if (CurrentItem.IsValid())
+	{
+		return FText::FromString(*CurrentItem);
+	}
+	return FText::FromString("Failed");
+}
 ```
 
