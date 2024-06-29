@@ -347,3 +347,158 @@ void FMyCustomWindowModule::AddToolBarExtension(FToolBarBuilder& builder)
 
 ```
 
+### 扩展编辑器主菜单栏
+
+MyCustomWindow.h
+
+```c++
+void AddMenuBarExtension(FMenuBarBuilder& builder);
+```
+
+MyCustomWindow.cpp
+
+```c++
+void FMyCustomWindowModule::AddMenuBarExtension(FMenuBarBuilder& builder)
+{
+	builder.AddMenuEntry(FMyCustomWindowCommands::Get().OpenPluginWindow);
+}
+
+void FMyCustomWindowModule::StartupModule()
+{
+    //...Other Functions
+	//主菜单扩展按钮
+	TSharedPtr<FExtender> MenuBarExtender = MakeShareable(new FExtender);
+	MenuBarExtender->AddMenuBarExtension("Help", EExtensionHook::After, PluginCommands, FMenuBarExtensionDelegate::CreateRaw(this, &FMyCustomWindowModule::AddMenuBarExtension));
+	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuBarExtender);
+}
+```
+
+### 扩展编辑器菜单栏
+
+MyCustomWindow.h
+
+```c++
+void AddMenuExtension(FMenuBuilder& builder);
+```
+
+MyCustomWindow.cpp
+
+```c++
+void FMyCustomWindowModule::AddMenuExtension(FMenuBuilder& builder)
+{
+	builder.AddMenuEntry(FMyCustomWindowCommands::Get().OpenPluginWindow);
+}
+
+void FMyCustomWindowModule::StartupModule()
+{
+    //...Other Functions
+	//扩展编辑器菜单栏
+	TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender);
+	MenuExtender->AddMenuExtension("WindowLayout", EExtensionHook::Before, PluginCommands, FMenuExtensionDelegate::CreateRaw(this, &FMyCustomWindowModule::AddMenuExtension));
+	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
+}
+```
+
+### 设置自定义的按钮图片样式
+
+在Resource中文件夹中添加自定义图标按钮
+
+![4](images\4.png)
+
+MyCustomWindowStyle.cpp
+
+```c++
+const FVector2D Icon32x32(32.0f, 32.0f);
+
+TSharedRef< FSlateStyleSet > FMyCustomWindowStyle::Create()
+{
+	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("MyCustomWindowStyle"));
+	Style->SetContentRoot(IPluginManager::Get().FindPlugin("MyCustomWindow")->GetBaseDir() / TEXT("Resources"));
+
+	//Style->Set("MyCustomWindow.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
+	Style->Set("MyCustomWindow.OpenPluginWindow", new IMAGE_BRUSH(TEXT("MyCustomButtonIcon"), Icon32x32));
+
+	return Style;
+}
+```
+
+### FTabManager自定义窗口
+
+效果：
+
+![5](images\5.png)
+
+MyCustomWindow.h
+
+```c++
+	TSharedRef<SDockTab> OnSpawnCustomWindow1(const class FSpawnTabArgs& SpawnTabArgs);
+	TSharedRef<SDockTab> OnSpawnCustomWindow2(const class FSpawnTabArgs& SpawnTabArgs);
+
+	TSharedPtr<FTabManager> MyWindowTabManager;
+	TSharedPtr<FTabManager::FLayout> MyWindowLayout;
+```
+
+MyCustomWindow.cpp
+
+```c++
+static const FName MyWindowTabName1("MyWindow1");
+static const FName MyWindowTabName2("MyWindow2");
+
+void FMyCustomWindowModule::StartupModule()
+{
+	//...Other Functions
+	//自定义窗口
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(MyCustomWindowTabName, FOnSpawnTab::CreateRaw(this, &FMyCustomWindowModule::OnSpawnPluginTab))
+		.SetDisplayName(LOCTEXT("FMyCustomWindowTabTitle", "MyCustomWindow"))
+		.SetMenuType(ETabSpawnerMenuType::Hidden);
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(MyWindowTabName1, FOnSpawnTab::CreateRaw(this, &FMyCustomWindowModule::OnSpawnCustomWindow1))
+		.SetDisplayName(LOCTEXT("FMyWindowTitle1", "MyWindow1"))
+		.SetMenuType(ETabSpawnerMenuType::Hidden);
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(MyWindowTabName2, FOnSpawnTab::CreateRaw(this, &FMyCustomWindowModule::OnSpawnCustomWindow2))
+		.SetDisplayName(LOCTEXT("FMyWindowTitle2", "MyWindow2"))
+		.SetMenuType(ETabSpawnerMenuType::Hidden);
+    //...
+}
+
+TSharedRef<SDockTab> FMyCustomWindowModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
+{
+	const TSharedRef<SDockTab> NomadTab = SNew(SDockTab).TabRole(ETabRole::NomadTab);
+	if (!MyWindowTabManager.IsValid())
+	{
+		MyWindowTabManager = FGlobalTabmanager::Get()->NewTabManager(NomadTab);
+		MyWindowLayout = FTabManager::NewLayout("MyLayout")
+			->AddArea
+			(
+				FTabManager::NewPrimaryArea()
+				->SetOrientation(Orient_Horizontal)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.5f)
+					->AddTab(MyWindowTabName1, ETabState::OpenedTab)
+				)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.5f)
+					->AddTab(MyWindowTabName2, ETabState::OpenedTab)
+				)
+			);
+	}
+
+	TSharedRef<SWidget> TabContent = MyWindowTabManager->RestoreFrom(MyWindowLayout.ToSharedRef(), TSharedPtr<SWindow>()).ToSharedRef();
+	NomadTab->SetContent(TabContent);
+	return NomadTab;
+}
+
+TSharedRef<SDockTab> FMyCustomWindowModule::OnSpawnCustomWindow1(const FSpawnTabArgs& SpawnTabArgs)
+{
+	return SNew(SDockTab);
+}
+
+TSharedRef<SDockTab> FMyCustomWindowModule::OnSpawnCustomWindow2(const FSpawnTabArgs& SpawnTabArgs)
+{
+	return SNew(SDockTab);
+}
+```
+
